@@ -1,0 +1,10 @@
+vncserver :1 -geometry 800x600
+sudo shutdown -h now
+
+python ./scripts/run.py --mode nerf --scene ./data/nerf/shuttle_large --gui --load_snapshot ./data/nerf/shuttle_large/base.msgpack
+
+python ./scripts/run.py --mode nerf --scene ./data/nerf/shuttle --load_snapshot ./data/nerf/shuttle/frequency.msgpack --screenshot_transforms ./data/nerf/shuttle/screenshots/transforms.json --screenshot_dir ./data/nerf/shuttle/screenshots/ --width 1280 --height 800
+
+python ./scripts/run.py --mode nerf --scene ./data/nerf/shuttle --load_snapshot ./data/nerf/shuttle/base.msgpack --screenshot_transforms ./data/nerf/shuttle/screenshots/transforms.json --screenshot_dir ./data/nerf/shuttle/screenshots/ --width 1280 --height 800
+
+./build/testbed --scene /home/ubuntu/Documents/github/strategic-rnd-playground/nerf-experiments/data/shuttle/

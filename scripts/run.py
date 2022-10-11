@@ -11,6 +11,9 @@
 import argparse
 import os
 import commentjson as json
+import cv2
+
+from matplotlib import pyplot as plt
 
 import numpy as np
 
@@ -64,6 +67,7 @@ def parse_args():
 	parser.add_argument("--second_window", action="store_true", help="Open a second window containing a copy of the main output.")
 
 	parser.add_argument("--sharpen", default=0, help="Set amount of sharpening applied to NeRF training images. Range 0.0 to 1.0.")
+	parser.add_argument("--depth", action="store_true", help="Render and save a depth image.")
 
 
 	return parser.parse_args()
@@ -309,7 +313,7 @@ if __name__ == "__main__":
 
 	if ref_transforms:
 		testbed.fov_axis = 0
-		testbed.fov = ref_transforms["camera_angle_x"] * 180 / np.pi
+		testbed.fov = ref_transforms["frames"][0]["camera_angle_x"] * 180 / np.pi
 		if not args.screenshot_frames:
 			args.screenshot_frames = range(len(ref_transforms["frames"]))
 		print(args.screenshot_frames)
@@ -318,15 +322,36 @@ if __name__ == "__main__":
 			cam_matrix = f["transform_matrix"]
 			testbed.set_nerf_camera_matrix(np.matrix(cam_matrix)[:-1,:])
 			outname = os.path.join(args.screenshot_dir, os.path.basename(f["file_path"]))
-
+   
+			#Add configuration to the screenshot filename
+			pos = outname.index('.',1)
+			ss = "_"+snapshot.split('.')[1].split('/')[-1]
+			outname = outname[:pos]+ss+outname[pos:]
+   
 			# Some NeRF datasets lack the .png suffix in the dataset metadata
 			if not os.path.splitext(outname)[1]:
 				outname = outname + ".png"
 
+			if args.depth:
+				print("saving depth screenshots")
+				pos = outname.index('.',1)
+				outname = outname[:pos]+"_depth"+outname[pos:]
+				testbed.render_mode = ngp.Depth
+      
 			print(f"rendering {outname}")
-			image = testbed.render(args.width or int(ref_transforms["w"]), args.height or int(ref_transforms["h"]), args.screenshot_spp, True)
+			image = testbed.render(args.width or int(ref_transforms["frames"][0]["w"]), args.height or int(ref_transforms["frames"][0]["h"]), args.screenshot_spp, True)
 			os.makedirs(os.path.dirname(outname), exist_ok=True)
-			write_image(outname, image)
+   
+			print(np.shape(image))
+			
+			if args.depth:
+				#Scale the depth image and print it in better colormap
+				gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) * 255
+				gray = cv2.equalizeHist(np.uint8(gray))
+				plt.imsave(outname,gray, cmap=plt.get_cmap('viridis'), vmin=0, vmax=255)
+			else:
+				write_image(outname, image)
+
 	elif args.screenshot_dir:
 		outname = os.path.join(args.screenshot_dir, args.scene + "_" + network_stem)
 		print(f"Rendering {outname}.png")
