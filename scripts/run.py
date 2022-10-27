@@ -348,7 +348,7 @@ if __name__ == "__main__":
 				#Scale the depth image and print it in better colormap
 				gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) * 255
 				gray = cv2.equalizeHist(np.uint8(gray))
-				plt.imsave(outname,gray, cmap=plt.get_cmap('viridis'), vmin=0, vmax=255)
+				plt.imsave(outname,gray, cmap=plt.get_cmap('gnuplot2'), vmin=0, vmax=255)
 			else:
 				write_image(outname, image)
 
